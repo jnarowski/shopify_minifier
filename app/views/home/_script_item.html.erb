@@ -1,0 +1,21 @@
+<li class='ui-state-default <%= script.ignored? ? 'draggable--item--ignored' : '' %> draggable--item script--item'>
+  <div class='row'>
+    <div class='col-1' style='text-align: center;'>
+      <div style='font-size: 2em; font-weight: bold;'>
+        <i class='fa fa-arrows' style='margin-top: 15px;'></i>
+      </div>
+    </div>
+    <div class='col-8'>
+      <div class='mb-1'><strong><%= (script.url || '/New Asset').split("/").last %></strong></div>
+      <%= text_field_tag "script_url[][url]", script.url, class: 'js-script-url form-control'%>
+      <%= hidden_field_tag "script_url[][id]", script.id, class: 'js-script-id' %>
+      <%= hidden_field_tag "script_url[][category]", script.category, class: 'js-script-category' %>
+      <%= hidden_field_tag "script_url[][position]", script.position, class: 'js-script-position' %>
+    </div>
+    <div class='col-1'>
+      <div class='mb-1'>&nbsp;</div>
+      <button class='btn btn-danger btn-ignore js-ignore'>Ignore</button>
+      <button class='btn btn-primary btn-unignore js-unignore'>Unignore</button>
+    </div>
+  </div>
+</li>

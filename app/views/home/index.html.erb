@@ -1,0 +1,138 @@
+<% content_for :javascript do %>
+  <script type="text/javascript">
+    ShopifyApp.ready(function(){
+      ShopifyApp.Bar.initialize({ title: "Home" });
+    });
+  </script>
+<% end %>
+
+<div class='container mb-4'>
+  <div class='row'>
+    <div class='col'>
+      <div>
+        <form method="post" action="/save">
+          <h2 class='mt-4'>Javascripts</h2>
+
+          <h4 class='text-primary mb-0'>
+            Active
+          </h4>
+          <ol class='javascript-scripts draggable'>
+            <% @js_scripts.each_with_index do |script, index| %>
+              <%= render 'script_item', { script: script } %>
+            <% end %>
+          </ol>
+
+          <h4 class='text-primary mt-4'>
+            Ignored
+          </h4>
+          <ol class='ignored-javascript-scripts draggable'>
+            <% @ignored_js_scripts.each_with_index do |script, index| %>
+              <%= render 'script_item', { script: script } %>
+            <% end %>
+          </ol>
+          <div class='javascript-cloneable' style='display: none;'>
+          <%= render 'script_item', { script: ScriptUrl.new(category: 'application/javascript') } %>
+          </div>
+
+          <div class='mt-4 p-4' style='background: whiteSmoke; border: 1px solid #eee;'>
+            <button type="submit" class='btn btn-success'>
+              Save
+            </button>
+            <button class='btn btn-link js-add-javascript'>
+              Add another javascript file
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class='mt-4'>
+        <h2 class='mt-4'>Stylesheets</h2>
+        <% @css_scripts.each do |script| %>
+          <div style='padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee'>
+            <%= text_field_tag :script, script.url, class: 'form-control' %>
+          </div>
+        <% end %>
+        <button class='btn btn-block btn-success'>
+          Add another stylesheet
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ol class='draggable'>
+  <li>First</li>
+  <li>Second</li>
+  <li>Third</li>
+</ol>
+
+<style>
+  .ui-state-highlight { background: yellow; }
+  .draggable--item .btn-unignore { display: none; }
+  .draggable--item--ignored .btn-ignore { display: none; }
+  .draggable--item--ignored .btn-unignore { display: block; }
+</style>
+
+<script>
+$(function  () {
+  $( ".draggable" ).sortable({
+    update: function( event, ui ) {
+      $('.draggable--item').each(function(idx, item){
+        $(item).find('.js-script-position').val(idx)
+      })
+      var data = $('form').serialize();
+      // console.log(data);
+      //
+      // var formdata = $("#myform").serializeArray();
+      // var data = {};
+      // $(formdata ).each(function(index, obj){
+      //     data[obj.name] = obj.value;
+      // });
+
+      var data = $.param(data, true)
+      $.post('save', data, { dataType: 'json' })
+      return true;
+    }
+  });
+
+  $('.js-add-javascript').click(function(e){
+    var cloned = $('.javascript-cloneable .draggable--item').clone()
+    $('.javascript-scripts').append(cloned);
+  })
+
+  $('.js-ignore').click(function(e){
+    e.preventDefault();
+
+    var item = $(e.target).closest('.draggable--item');
+    var script_url = {
+      id: $(item).find('.js-script-id').val(),
+      url: $(item).find('.js-script-url').val(),
+      category: $(item).find('.js-script-category').val(),
+      ignored: true
+    }
+
+    $.post('/update', { script_url: script_url }).then(function(resp){
+      $(item)
+        .detach()
+        .appendTo('.ignored-javascript-scripts')
+        .addClass('draggable--item--ignored')
+        .find('.js-script-id').val(resp.id)
+    })
+  })
+
+  $('.js-unignore').click(function(e){
+    e.preventDefault();
+
+    var item = $(e.target).closest('.draggable--item');
+    var script_url = {
+      id: $(item).find('.js-script-id').val(),
+      ignored: false
+    }
+
+    $.post('/update', { script_url: script_url }).then(function(resp){
+      $(item)
+        .detach()
+        .appendTo('.javascript-scripts').removeClass('draggable--item--ignored')
+    })
+  })
+});
+</script>

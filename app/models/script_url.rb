@@ -1,0 +1,2 @@
+class ScriptUrl < ApplicationRecord
+end

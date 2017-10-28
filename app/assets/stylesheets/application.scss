@@ -1,0 +1,38 @@
+@import "bootstrap";
+@import "font-awesome";
+@import "jquery-ui";
+
+body.dragging, body.dragging * {
+  cursor: move !important;
+}
+
+.dragged {
+  position: absolute;
+  opacity: 0.5;
+  z-index: 2000;
+  background: #ccc;
+  border: 1px solid #666;
+}
+
+.draggable {
+  list-style: none;
+  padding: 0px;
+  margin: 0px;
+}
+
+.draggable .placeholder {
+  padding: 0px;
+  position: relative;
+  /** More li styles **/
+}
+.draggable .placeholder:before {
+  position: absolute;
+  /** Define arrowhead **/
+}
+.draggable .draggable--item {
+}
+
+.script--item {
+  padding: 14px;
+  border-bottom: 1px solid #eee;
+}
