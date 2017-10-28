@@ -25,6 +25,16 @@
   Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
   and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
 */
+
+/*!
+  SerializeJSON jQuery plugin.
+  https://github.com/marioizquierdo/jquery.serializeJSON
+  version 2.8.1 (Dec, 2016)
+
+  Copyright (c) 2012, 2017 Mario Izquierdo
+  Dual licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
+  and GPL (http://www.opensource.org/licenses/gpl-license.php) licenses.
+*/
 (function (factory) {
   if (typeof define === 'function' && define.amd) { // AMD. Register as an anonymous module.
     define(['jquery'], factory);

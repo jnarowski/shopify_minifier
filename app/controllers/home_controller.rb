@@ -1,26 +1,50 @@
 class HomeController < ShopifyApp::AuthenticatedController
   def index
-    p session[:shopify_user]
+    # p 'deee'
+    # p shop_session.url
+    # p 'deeee'
+    # ss = ShopifyAPI::Shop.where(url: shop_session.url).first
+    # p ss
+    # p 'deeee'
 
     js_content_type = 'application/javascript'
-    css_content_type = 'application/javascript'
+    css_content_type = 'text/css'
 
     scripts = []
     ShopifyAPI::Asset.find(:all).each do |asset|
       if asset.content_type == css_content_type || asset.content_type == js_content_type
-        scripts << ScriptUrl.find_or_initialize_by(url: asset.public_url, category: asset.content_type)
+        script = ScriptUrl.find_or_initialize_by(url: asset.public_url, category: asset.content_type)
+        if script.new_record?
+          script.position = 999
+        end
+        scripts << script
       end
     end
 
-    # existing_scripts = ScriptUrl.
+    ScriptUrl.all.each do |local_script|
+      unless scripts.detect{|s| s.url == local_script.url }
+        scripts << local_script
+      end
+    end
 
-    @js_scripts = scripts.select {|s| s.category == js_content_type && !s.ignored? }
-    @ignored_js_scripts = scripts.select {|s| s.category == js_content_type && s.ignored?}
+    @js_scripts = scripts.select {|s| s.category == js_content_type && !s.ignored? }.sort_by { |hsh| hsh.position }
+    @ignored_js_scripts = scripts.select {|s| s.category == js_content_type && s.ignored? }.sort_by { |hsh| hsh.position }
 
-    @css_scripts = scripts.select {|s| s.category == css_content_type}
+    @css_scripts = scripts.select {|s| s.category == css_content_type && !s.ignored? }.sort_by { |hsh| hsh.position }
+    @ignored_css_scripts = scripts.select {|s| s.category == css_content_type && s.ignored? }.sort_by { |hsh| hsh.position }
   end
 
-  def save
+  def save_all
+    params[:script_url].each do |script|
+      next if script[:url].blank?
+
+      script_url = ScriptUrl.find_or_initialize_by(
+        url: script[:url],
+        category: script[:category]
+      )
+      script_url.position = script[:position]
+      script_url.save
+    end
   end
 
   def update
@@ -36,6 +60,12 @@ class HomeController < ShopifyApp::AuthenticatedController
   def script_url_params
     params.require(:script_url).permit(:id, :url, :ignored, :category)
   end
+
+  def destroy
+    @script_url = ScriptUrl.find(params[:id])
+    @script_url.destroy
+  end
+
 end
 
 # @products = ShopifyAPI::Product.find(:all, params: { limit: 10 })

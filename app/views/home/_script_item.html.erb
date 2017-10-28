@@ -1,4 +1,4 @@
-<li class='ui-state-default <%= script.ignored? ? 'draggable--item--ignored' : '' %> draggable--item script--item'>
+<li class='ui-state-default <%= script.position == 999 ? 'script--item--new' : '' %> <%= script.ignored? ? 'draggable--item--ignored' : '' %> draggable--item script--item'>
   <div class='row'>
     <div class='col-1' style='text-align: center;'>
       <div style='font-size: 2em; font-weight: bold;'>
@@ -12,10 +12,11 @@
       <%= hidden_field_tag "script_url[][category]", script.category, class: 'js-script-category' %>
       <%= hidden_field_tag "script_url[][position]", script.position, class: 'js-script-position' %>
     </div>
-    <div class='col-1'>
+    <div class='col-3'>
       <div class='mb-1'>&nbsp;</div>
       <button class='btn btn-danger btn-ignore js-ignore'>Ignore</button>
       <button class='btn btn-primary btn-unignore js-unignore'>Unignore</button>
+      <button class='btn btn-danger btn-remove js-remove'>Del</button>
     </div>
   </div>
 </li>

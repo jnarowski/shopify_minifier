@@ -9,14 +9,14 @@
 <div class='container mb-4'>
   <div class='row'>
     <div class='col'>
-      <div>
-        <form method="post" action="/save">
+      <div class='content-type-wrapper'>
+        <form method="post" action="/save_all">
           <h2 class='mt-4'>Javascripts</h2>
 
           <h4 class='text-primary mb-0'>
             Active
           </h4>
-          <ol class='javascript-scripts draggable'>
+          <ol class='javascript-scripts active-scripts draggable'>
             <% @js_scripts.each_with_index do |script, index| %>
               <%= render 'script_item', { script: script } %>
             <% end %>
@@ -25,7 +25,7 @@
           <h4 class='text-primary mt-4'>
             Ignored
           </h4>
-          <ol class='ignored-javascript-scripts draggable'>
+          <ol class='ignored-javascript-scripts ignored-scripts draggable'>
             <% @ignored_js_scripts.each_with_index do |script, index| %>
               <%= render 'script_item', { script: script } %>
             <% end %>
@@ -44,32 +44,53 @@
           </div>
         </form>
       </div>
-      <div class='mt-4'>
-        <h2 class='mt-4'>Stylesheets</h2>
-        <% @css_scripts.each do |script| %>
-          <div style='padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid #eee'>
-            <%= text_field_tag :script, script.url, class: 'form-control' %>
+      <div class='content-type-wrapper'>
+        <form method="post" action="/save_all">
+          <h2 class='mt-4'>Stylesheets</h2>
+
+          <h4 class='text-primary mb-0'>
+            Active
+          </h4>
+          <ol class='css-scripts active-scripts draggable'>
+            <% @css_scripts.each_with_index do |script, index| %>
+              <%= render 'script_item', { script: script } %>
+            <% end %>
+          </ol>
+
+          <h4 class='text-primary mt-4'>
+            Ignored
+          </h4>
+          <ol class='ignored-css-scripts ignored-scripts draggable'>
+            <% @ignored_css_scripts.each_with_index do |script, index| %>
+              <%= render 'script_item', { script: script } %>
+            <% end %>
+          </ol>
+          <div class='css-cloneable' style='display: none;'>
+          <%= render 'script_item', { script: ScriptUrl.new(category: 'text/css') } %>
           </div>
-        <% end %>
-        <button class='btn btn-block btn-success'>
-          Add another stylesheet
-        </button>
+
+          <div class='mt-4 p-4' style='background: whiteSmoke; border: 1px solid #eee;'>
+            <button type="submit" class='btn btn-success'>
+              Save
+            </button>
+            <button class='btn btn-link js-add-css'>
+              Add another css file
+            </button>
+          </div>
+        </form>
       </div>
+
     </div>
   </div>
 </div>
 
-<ol class='draggable'>
-  <li>First</li>
-  <li>Second</li>
-  <li>Third</li>
-</ol>
-
 <style>
   .ui-state-highlight { background: yellow; }
   .draggable--item .btn-unignore { display: none; }
+  .draggable--item .btn-remove { display: none; }
   .draggable--item--ignored .btn-ignore { display: none; }
-  .draggable--item--ignored .btn-unignore { display: block; }
+  .draggable--item--ignored .btn-unignore { display: inline-block; }
+  .draggable--item--ignored .btn-remove { display: inline-block; }
 </style>
 
 <script>
@@ -79,18 +100,17 @@ $(function  () {
       $('.draggable--item').each(function(idx, item){
         $(item).find('.js-script-position').val(idx)
       })
-      var data = $('form').serialize();
-      // console.log(data);
-      //
-      // var formdata = $("#myform").serializeArray();
-      // var data = {};
-      // $(formdata ).each(function(index, obj){
-      //     data[obj.name] = obj.value;
-      // });
 
-      var data = $.param(data, true)
-      $.post('save', data, { dataType: 'json' })
-      return true;
+      var formdata = $("form").serializeJSON();
+
+      $.ajax({
+        type : "POST",
+        url: '/save_all',
+        dataType: 'json',
+        contentType: 'application/json',
+        data : JSON.stringify(formdata)
+      });
+
     }
   });
 
@@ -99,10 +119,17 @@ $(function  () {
     $('.javascript-scripts').append(cloned);
   })
 
+  $('.js-add-css').click(function(e){
+    var cloned = $('.css-cloneable .draggable--item').clone()
+    $('.css-scripts').append(cloned);
+  })
+
   $('.js-ignore').click(function(e){
     e.preventDefault();
 
     var item = $(e.target).closest('.draggable--item');
+    var type = $(item).find('.js-script-category').val() == 'text/css' ? 'css' : 'javascript';
+
     var script_url = {
       id: $(item).find('.js-script-id').val(),
       url: $(item).find('.js-script-url').val(),
@@ -113,7 +140,7 @@ $(function  () {
     $.post('/update', { script_url: script_url }).then(function(resp){
       $(item)
         .detach()
-        .appendTo('.ignored-javascript-scripts')
+        .appendTo('.ignored-' + type + '-scripts')
         .addClass('draggable--item--ignored')
         .find('.js-script-id').val(resp.id)
     })
@@ -123,6 +150,7 @@ $(function  () {
     e.preventDefault();
 
     var item = $(e.target).closest('.draggable--item');
+    var type = $(item).find('.js-script-category').val() == 'text/css' ? 'css' : 'javascript';
     var script_url = {
       id: $(item).find('.js-script-id').val(),
       ignored: false
@@ -131,8 +159,24 @@ $(function  () {
     $.post('/update', { script_url: script_url }).then(function(resp){
       $(item)
         .detach()
-        .appendTo('.javascript-scripts').removeClass('draggable--item--ignored')
+        .appendTo('.' + type + '-scripts').removeClass('draggable--item--ignored')
     })
+  })
+
+  $('.js-remove').click(function(e){
+    e.preventDefault();
+
+    var item = $(e.target).closest('.draggable--item');
+    id = $(item).find('.js-script-id').val()
+
+    if (id) {
+      $.ajax({ url: '/destroy/' + id , method: 'delete' }).then(function(resp){
+        $(item).remove();
+      })
+    } else {
+      $(item).remove();
+    }
+
   })
 });
 </script>

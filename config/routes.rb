@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   mount ShopifyApp::Engine, at: '/'
   resources :webhooks
 
-  post '/save', to: 'home#save'
+  post '/save_all', to: 'home#save_all'
   post '/update', to: 'home#update'
+  delete '/destroy/:id', to: 'home#destroy'
 end
