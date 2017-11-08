@@ -1,19 +1,23 @@
-class HomeController < ShopifyApp::AuthenticatedController
-  def index
-    # p 'deee'
-    # p shop_session.url
-    # p 'deeee'
-    # ss = ShopifyAPI::Shop.where(url: shop_session.url).first
-    # p ss
-    # p 'deeee'
+class HomeController < ShopifyController
 
+  def index
     js_content_type = 'application/javascript'
     css_content_type = 'text/css'
+
+    p shop_session
+    p 'deeee'
+    p 'deeee'
+    p 'deeee'
 
     scripts = []
     ShopifyAPI::Asset.find(:all).each do |asset|
       if asset.content_type == css_content_type || asset.content_type == js_content_type
-        script = ScriptUrl.find_or_initialize_by(url: asset.public_url, category: asset.content_type)
+        script = ScriptUrl.find_or_initialize_by(
+          shop_id: current_shop.try(:id),
+          url: asset.public_url,
+          category: asset.content_type
+        )
+
         if script.new_record?
           script.position = 999
         end
@@ -21,7 +25,7 @@ class HomeController < ShopifyApp::AuthenticatedController
       end
     end
 
-    ScriptUrl.all.each do |local_script|
+    ScriptUrl.with_shop(current_shop.id).each do |local_script|
       unless scripts.detect{|s| s.url == local_script.url }
         scripts << local_script
       end
@@ -40,11 +44,20 @@ class HomeController < ShopifyApp::AuthenticatedController
 
       script_url = ScriptUrl.find_or_initialize_by(
         url: script[:url],
-        category: script[:category]
+        category: script[:category],
+        shop_id: current_shop.try(:id)
       )
       script_url.position = script[:position]
       script_url.save
     end
+  end
+
+  def minify_javascripts
+    @code = ScriptUrl.with_shop(current_shop.id).minify_javascripts
+  end
+
+  def minify_stylesheets
+    @code = ScriptUrl.with_shop(current_shop.id).minify_stylesheets
   end
 
   def update
@@ -58,7 +71,7 @@ class HomeController < ShopifyApp::AuthenticatedController
   end
 
   def script_url_params
-    params.require(:script_url).permit(:id, :url, :ignored, :category)
+    params.require(:script_url).permit(:id, :url, :ignored, :category).merge(shop_id: current_shop.try(:id))
   end
 
   def destroy
